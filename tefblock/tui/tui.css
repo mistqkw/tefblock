@@ -1,0 +1,126 @@
+Screen {
+    background: $surface;
+}
+
+#app-search, #site-input, #timer-custom, #preset-name {
+    width: 1fr;
+    margin: 1 0;
+}
+
+#app-list {
+    height: 1fr;
+    border: round $primary;
+}
+
+.row {
+    height: auto;
+    align: left middle;
+    margin-bottom: 1;
+}
+
+.row-label {
+    width: 1fr;
+    padding: 1 2;
+}
+
+.rows-scroll {
+    height: 1fr;
+    border: round $primary;
+    padding: 1;
+}
+
+.remove-btn {
+    min-width: 5;
+    background: $error 40%;
+}
+
+.preset-btn {
+    margin-left: 1;
+}
+
+.preset-btn.danger {
+    background: $error 40%;
+}
+
+.timer-btn {
+    margin-right: 1;
+}
+
+.section-title {
+    text-style: bold;
+    margin: 1 0;
+}
+
+.empty-hint {
+    color: $text-muted;
+    padding: 1 2;
+}
+
+#summary {
+    background: $panel;
+    padding: 1 2;
+    text-style: bold;
+}
+
+#start-btn {
+    width: 100%;
+    height: 3;
+    text-style: bold;
+}
+
+#warning-box {
+    align: center middle;
+    height: 100%;
+    padding: 2 4;
+}
+
+.warning-emoji {
+    text-align: center;
+    text-style: bold;
+    width: 100%;
+    content-align: center middle;
+    padding-bottom: 1;
+}
+
+.warning-text {
+    text-align: center;
+    text-style: bold;
+    color: $warning;
+    width: 100%;
+    padding: 1 2;
+}
+
+.warning-details {
+    text-align: center;
+    width: 100%;
+    padding: 1 2;
+    color: $text-muted;
+}
+
+#active-box {
+    align: center middle;
+    height: 100%;
+    padding: 2 4;
+}
+
+.active-title {
+    text-align: center;
+    text-style: bold;
+    width: 100%;
+    padding-bottom: 1;
+}
+
+.countdown {
+    text-align: center;
+    text-style: bold;
+    color: $success;
+    width: 100%;
+    padding: 1 2;
+}
+
+.hint {
+    text-align: center;
+    color: $text-muted;
+    width: 100%;
+    padding-top: 2;
+}

@@ -1,0 +1,26 @@
+[project]
+name = "tefblock"
+version = "0.1.0"
+description = "A terminal app/website blocker with a beautiful TUI, for Linux and Windows."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+dependencies = [
+    "textual>=0.60",
+    "psutil>=5.9",
+    "rich>=13.0",
+    "pywin32; sys_platform == 'win32'",
+]
+
+[project.scripts]
+block = "tefblock.cli:main"
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["tefblock*"]
+
+[tool.setuptools.package-data]
+tefblock = ["tui/*.css"]
