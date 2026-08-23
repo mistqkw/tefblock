@@ -1,0 +1,69 @@
+<svg viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="TeFBlock announcement banner">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#12141c"/>
+      <stop offset="100%" stop-color="#191c27"/>
+    </linearGradient>
+    <linearGradient id="accentText" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#7fc4f5"/>
+      <stop offset="100%" stop-color="#5aa9e6"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="14%" cy="18%" r="65%">
+      <stop offset="0%" stop-color="#5aa9e6" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#5aa9e6" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glow2" cx="92%" cy="90%" r="55%">
+      <stop offset="0%" stop-color="#5aa9e6" stop-opacity="0.10"/>
+      <stop offset="100%" stop-color="#5aa9e6" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1280" height="720" fill="url(#bg)"/>
+  <rect width="1280" height="720" fill="url(#glow)"/>
+  <rect width="1280" height="720" fill="url(#glow2)"/>
+
+  <!-- terminal chrome -->
+  <rect x="0" y="0" width="1280" height="56" fill="#1b1e28"/>
+  <circle cx="34" cy="28" r="7.5" fill="#ff5f57"/>
+  <circle cx="60" cy="28" r="7.5" fill="#febc2e"/>
+  <circle cx="86" cy="28" r="7.5" fill="#28c840"/>
+  <text x="640" y="33" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="16" fill="#8b90a3">block — TeFBlock</text>
+  <line x1="0" y1="56" x2="1280" y2="56" stroke="#2b2f3d" stroke-width="1"/>
+
+  <!-- wordmark -->
+  <text x="96" y="230" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="104" font-weight="700" fill="#e8e9ee">Te<tspan fill="url(#accentText)">F</tspan>Block</text>
+  <rect x="856" y="164" width="20" height="82" fill="#5aa9e6"/>
+
+  <!-- tagline -->
+  <text x="98" y="284" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="27" fill="#a7abb8">Block distracting apps &amp; sites. From your terminal.</text>
+
+  <!-- prompt -->
+  <text x="98" y="336" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="24" fill="#6fb6ee">$ <tspan fill="#c9cdd8">block work</tspan></text>
+
+  <!-- divider -->
+  <line x1="98" y1="380" x2="1182" y2="380" stroke="#2b2f3d" stroke-width="1"/>
+
+  <!-- feature bullets -->
+  <g font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="24" fill="#c9cdd8">
+    <text x="98" y="432"><tspan fill="#5aa9e6">▸</tspan>  Full-screen TUI + plain-text mode</text>
+    <text x="98" y="474"><tspan fill="#5aa9e6">▸</tspan>  Smart site groups — one link blocks the whole platform</text>
+    <text x="98" y="516"><tspan fill="#5aa9e6">▸</tspan>  Survives closing the terminal — stop needs root/admin</text>
+    <text x="98" y="558"><tspan fill="#5aa9e6">▸</tspan>  Presets you can turn into their own shell command</text>
+  </g>
+
+  <!-- platform chips -->
+  <g font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="18" fill="#c9cdd8">
+    <rect x="98" y="602" width="110" height="36" rx="18" fill="#232732" stroke="#2b2f3d"/>
+    <text x="153" y="626" text-anchor="middle">Linux</text>
+
+    <rect x="220" y="602" width="140" height="36" rx="18" fill="#232732" stroke="#2b2f3d"/>
+    <text x="290" y="626" text-anchor="middle">Windows</text>
+
+    <rect x="372" y="602" width="190" height="36" rx="18" fill="#232732" stroke="#2b2f3d"/>
+    <text x="467" y="626" text-anchor="middle">MIT · open source</text>
+  </g>
+
+  <!-- footer link -->
+  <line x1="0" y1="672" x2="1280" y2="672" stroke="#2b2f3d" stroke-width="1"/>
+  <text x="98" y="705" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="20" fill="#8b90a3">github.com/mistqkw/tefblock</text>
+</svg>

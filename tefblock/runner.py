@@ -12,6 +12,8 @@ import sys
 import time
 from datetime import datetime, timedelta
 
+import psutil
+
 from . import config, elevate
 from .config import AppEntry, BlockState, Selection
 from .domains import expand_to_group
@@ -59,10 +61,36 @@ def start_block(selection: Selection, preset_name: str | None = None) -> tuple[b
     return False, f"Демон не подтвердил запуск — проверьте `{config.LOG_FILE}`."
 
 
+def daemon_alive(state: BlockState) -> bool:
+    """Проверяет, жив ли реально процесс демона, а не просто верит state.json.
+
+    Демон может умереть не дойдя до cleanup — убит извне (OOM killer,
+    systemd, ручной kill -9). Тогда state.json навсегда остаётся в статусе
+    "активна", а обычный flag-файл никто не подхватит: демона больше нет."""
+    if not state.daemon_pid:
+        return False
+    return psutil.pid_exists(state.daemon_pid)
+
+
+def repair_stuck_state() -> tuple[bool, str]:
+    """Восстанавливает hosts и сбрасывает state.json, когда демон мёртв,
+    но state.json всё ещё считает блокировку активной."""
+    ok, err = elevate.run_elevated_and_wait(
+        sys.executable,
+        ["-m", "tefblock.daemon", "--config-dir", str(config.CONFIG_DIR), "--repair"],
+    )
+    if not ok:
+        return False, err or "Не удалось получить права для восстановления."
+    return True, "Демон был аварийно завершён — hosts восстановлен, состояние сброшено."
+
+
 def request_stop() -> tuple[bool, str]:
     state = config.load_state()
     if not state.active or not state.daemon_pid:
         return False, "Активной блокировки нет."
+
+    if not daemon_alive(state):
+        return repair_stuck_state()
 
     ok, err = elevate.run_elevated_and_wait(
         sys.executable,
@@ -76,4 +104,6 @@ def request_stop() -> tuple[bool, str]:
         fresh = config.load_state()
         if not fresh.active:
             return True, "Блокировка снята."
+        if not daemon_alive(fresh):
+            return repair_stuck_state()
     return False, "Флаг остановки создан, но демон ещё не отреагировал — подождите немного."

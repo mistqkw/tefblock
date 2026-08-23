@@ -38,6 +38,7 @@ def _apply_config_dir_override() -> None:
 
 
 _apply_config_dir_override()
+_REPAIR_MODE = "--repair" in sys.argv
 
 import time
 from datetime import datetime
@@ -190,8 +191,18 @@ def _take_root_ownership(path: Path) -> tuple[int, int] | None:
 
 
 def _release_ownership(path: Path, owner: tuple[int, int] | None) -> None:
-    if config.IS_WINDOWS or owner is None or not path.exists():
+    if config.IS_WINDOWS or not path.exists():
         return
+    if owner is None:
+        # используется из repair(): владельца никто не запоминал (у нас нет
+        # живого демона, из которого он был бы захвачен), поэтому берём его
+        # из SUDO_UID/SUDO_GID — их sudo сам подставляет для вызвавшего пользователя
+        sudo_uid = os.environ.get("SUDO_UID")
+        sudo_gid = os.environ.get("SUDO_GID")
+        if sudo_uid is None or sudo_gid is None:
+            _log("не удалось определить исходного владельца state.json (нет SUDO_UID/SUDO_GID)")
+            return
+        owner = (int(sudo_uid), int(sudo_gid))
     try:
         os.chown(path, owner[0], owner[1])
         os.chmod(path, 0o600)
@@ -234,6 +245,24 @@ def _clear_stop_flag() -> None:
         config.STOP_FLAG_FILE.unlink()
     except OSError:
         pass
+
+
+def repair() -> int:
+    """Чинит зависшее состояние: демон умер, не дойдя до cleanup (убит извне —
+    OOM killer, systemd, ручной kill -9 и т.п.). В этом случае state.json
+    навсегда остаётся root-owned с active=true, а /etc/hosts — заблокированным,
+    и обычный flag-файл никто не подхватит, потому что демона больше нет.
+    Восстанавливает hosts, сбрасывает state.json и возвращает его пользователю."""
+    if not _is_admin():
+        print("repair должен запускаться с правами root/администратора", file=sys.stderr)
+        return 1
+    remove_hosts_block()
+    config.clear_state()
+    _clear_stop_flag()
+    _release_ownership(config.STATE_FILE, None)
+    _log("восстановление зависшего состояния (--repair): hosts и state.json сброшены")
+    print("Готово: hosts восстановлен, state.json сброшен.")
+    return 0
 
 
 def run() -> int:
@@ -281,4 +310,4 @@ def run() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(run())
+    sys.exit(repair() if _REPAIR_MODE else run())

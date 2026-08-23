@@ -341,8 +341,16 @@ class WarningScreen(Screen):
             self.notify(message, severity="error", timeout=8)
 
 
+_STOP_BUTTON_LABEL = "⏹  Завершить раньше времени"
+_STOP_BUTTON_CONFIRM_LABEL = "Точно? Нажми ещё раз — попросит пароль"
+
+
 class ActiveBlockScreen(Screen):
     """Экран во время активной блокировки — обратный отсчёт."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._stop_confirm_pending = False
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=False)
@@ -351,10 +359,10 @@ class ActiveBlockScreen(Screen):
             yield Static("", id="countdown", classes="countdown")
             yield Static("", id="block-details", classes="warning-details")
             yield Static(
-                "Работай. Это окно можно закрыть — блокировка останется в фоне.\n"
-                "Снять раньше времени: в другом терминале выполни `block --stop`.",
+                "Работай. Это окно можно закрыть — блокировка останется в фоне.",
                 classes="hint",
             )
+            yield Button(_STOP_BUTTON_LABEL, id="stop-btn", variant="error")
         yield Footer()
 
     def on_mount(self) -> None:
@@ -376,6 +384,39 @@ class ActiveBlockScreen(Screen):
             f"Сайты: {', '.join(state.sites) or '—'}"
         )
         self.query_one("#block-details", Static).update(details)
+
+    async def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id != "stop-btn":
+            return
+        if not self._stop_confirm_pending:
+            self._stop_confirm_pending = True
+            event.button.label = _STOP_BUTTON_CONFIRM_LABEL
+            self.set_timer(4.0, self._reset_stop_confirm)
+            return
+        self._stop_confirm_pending = False
+        await self._do_stop()
+
+    def _reset_stop_confirm(self) -> None:
+        self._stop_confirm_pending = False
+        try:
+            self.query_one("#stop-btn", Button).label = _STOP_BUTTON_LABEL
+        except Exception:
+            pass
+
+    async def _do_stop(self) -> None:
+        button = self.query_one("#stop-btn", Button)
+        button.disabled = True
+        button.label = "Останавливаю…"
+        with self.app.suspend():
+            print("\nTeFBlock: нужен пароль sudo, чтобы снять блокировку раньше времени.\n")
+            ok, message = runner.request_stop()
+        if ok:
+            self.notify(message)
+            self.finish()
+        else:
+            button.disabled = False
+            button.label = _STOP_BUTTON_LABEL
+            self.notify(message, severity="error", timeout=8)
 
     def finish(self) -> None:
         if getattr(self.app, "main_screen_available", False):

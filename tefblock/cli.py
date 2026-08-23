@@ -12,14 +12,21 @@ def _print_status() -> int:
     if not state.active:
         print("Блокировка не активна.")
         return 0
-    minutes_left = int(state.seconds_left // 60)
-    seconds_left = int(state.seconds_left % 60)
+    if not runner.daemon_alive(state):
+        print("Блокировка помечена как активна, но процесс демона не найден — похоже, он аварийно завершился.")
+        print("Сайты/приложения могут остаться заблокированными, пока это не починится.")
+        print("Выполни `block --stop` — он обнаружит это и всё восстановит сам.")
+        return 0
     preset = f" (пресет: {state.preset})" if state.preset else ""
-    print(f"Блокировка активна{preset}, осталось {minutes_left} мин {seconds_left} сек.")
+    print(f"Блокировка активна{preset}.")
     if state.apps:
         print("Приложения: " + ", ".join(a.name for a in state.apps))
     if state.sites:
         print("Сайты: " + ", ".join(state.sites))
+    print()
+    from . import textmode
+
+    textmode.watch_countdown()
     return 0
 
 

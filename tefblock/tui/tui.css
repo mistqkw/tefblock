@@ -124,3 +124,8 @@ Screen {
     width: 100%;
     padding-top: 2;
 }
+
+#stop-btn {
+    margin-top: 2;
+    text-style: bold;
+}

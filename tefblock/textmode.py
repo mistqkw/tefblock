@@ -7,7 +7,10 @@
 """
 from __future__ import annotations
 
+import time
+
 from rich.console import Console
+from rich.live import Live
 from rich.panel import Panel
 from rich.prompt import Confirm, IntPrompt, Prompt
 from rich.table import Table
@@ -134,6 +137,36 @@ def maybe_save_preset(selection: Selection) -> str | None:
     return name
 
 
+def watch_countdown() -> None:
+    """Живой отсчёт внизу отчёта — обновляется на месте (без alt-screen,
+    поэтому не задевает blur/прозрачность терминала) до самого завершения
+    блокировки. Ctrl+C закрывает только просмотр, сама блокировка остаётся
+    работать в фоне."""
+    try:
+        with Live(console=console, refresh_per_second=1, transient=False) as live:
+            while True:
+                state = config.load_state()
+                if not state.active:
+                    live.update("[bold green]✓ Блокировка завершена.[/bold green]")
+                    break
+                if not runner.daemon_alive(state):
+                    live.update(
+                        "[bold red]Демон аварийно завершился.[/bold red] "
+                        "Выполни `block --stop` — он обнаружит это и восстановит сам."
+                    )
+                    break
+                total = int(state.seconds_left)
+                hrs, rem = divmod(total, 3600)
+                mins, secs = divmod(rem, 60)
+                live.update(
+                    f"[cyan]Осталось:[/cyan] {hrs:02}:{mins:02}:{secs:02}   "
+                    "[dim](Ctrl+C — закрыть просмотр, блокировка продолжится в фоне)[/dim]"
+                )
+                time.sleep(1)
+    except KeyboardInterrupt:
+        console.print("\n[dim]Просмотр закрыт — блокировка продолжает работать в фоне.[/dim]")
+
+
 def confirm_and_start(selection: Selection, preset_name: str | None) -> int:
     body = (
         f"[bold]Приложения:[/bold] {', '.join(a.name for a in selection.apps) or '—'}\n"
@@ -157,7 +190,8 @@ def confirm_and_start(selection: Selection, preset_name: str | None) -> int:
     ok, message = runner.start_block(selection, preset_name)
     if ok:
         console.print(f"[bold green]{message}[/bold green]")
-        console.print("[dim]Статус: `block --status`.  Досрочно снять: `block --stop`.[/dim]")
+        console.print("[dim]Досрочно снять в другом терминале: `block --stop`. Здесь — Ctrl+C, чтобы просто закрыть просмотр.[/dim]\n")
+        watch_countdown()
         return 0
     console.print(f"[bold red]{message}[/bold red]")
     return 1
