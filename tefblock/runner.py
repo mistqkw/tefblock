@@ -8,6 +8,7 @@ elevation-запросом и сам демонизируется изнутри
 """
 from __future__ import annotations
 
+import os
 import sys
 import time
 from datetime import datetime, timedelta
@@ -44,10 +45,18 @@ def start_block(selection: Selection, preset_name: str | None = None) -> tuple[b
     state = build_state(selection, preset_name)
     config.save_state(state)
 
-    ok, err = elevate.launch_daemon(
-        sys.executable,
-        ["-m", "tefblock.daemon", "--config-dir", str(config.CONFIG_DIR)],
-    )
+    try:
+        ok, err = elevate.launch_daemon(
+            sys.executable,
+            ["-m", "tefblock.daemon", "--config-dir", str(config.CONFIG_DIR)],
+        )
+    except BaseException:
+        # пользователь мог прервать (Ctrl+C, закрыл терминал) прямо во время
+        # ввода sudo-пароля — тогда демон никогда не получал прав, hosts не
+        # трогался, но state.json уже записан как active=true и застрял бы
+        # так навсегда. Подчищаем и передаём прерывание дальше.
+        config.clear_state()
+        raise
     if not ok:
         config.clear_state()
         return False, err or "Не удалось запустить демон с повышенными правами."
@@ -72,9 +81,33 @@ def daemon_alive(state: BlockState) -> bool:
     return psutil.pid_exists(state.daemon_pid)
 
 
+def _repair_needs_root() -> bool:
+    """Root для починки нужен, только если демон реально успел что-то сделать
+    с правами root/администратора — заблокировать hosts или забрать
+    state.json себе. Если демон умер (или так и не запустился) раньше этого,
+    почистить всё можно и без повторного sudo-пароля."""
+    try:
+        if config.HOSTS_PATH.exists():
+            text = config.HOSTS_PATH.read_text(encoding="utf-8")
+            if config.HOSTS_MARK_START in text:
+                return True
+    except OSError:
+        return True
+    if not config.IS_WINDOWS and config.STATE_FILE.exists():
+        try:
+            if config.STATE_FILE.stat().st_uid != os.getuid():
+                return True
+        except OSError:
+            return True
+    return False
+
+
 def repair_stuck_state() -> tuple[bool, str]:
-    """Восстанавливает hosts и сбрасывает state.json, когда демон мёртв,
-    но state.json всё ещё считает блокировку активной."""
+    """Восстанавливает hosts и сбрасывает state.json, когда демон мёртв или
+    так и не запустился, а state.json всё ещё считает блокировку активной."""
+    if not _repair_needs_root():
+        config.clear_state()
+        return True, "Демон так и не успел запуститься — состояние сброшено (hosts не был тронут, sudo не понадобился)."
     ok, err = elevate.run_elevated_and_wait(
         sys.executable,
         ["-m", "tefblock.daemon", "--config-dir", str(config.CONFIG_DIR), "--repair"],
@@ -86,7 +119,7 @@ def repair_stuck_state() -> tuple[bool, str]:
 
 def request_stop() -> tuple[bool, str]:
     state = config.load_state()
-    if not state.active or not state.daemon_pid:
+    if not state.active:
         return False, "Активной блокировки нет."
 
     if not daemon_alive(state):
